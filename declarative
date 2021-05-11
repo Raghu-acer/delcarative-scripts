@@ -1,0 +1,28 @@
+pipeline {
+    agent any
+    stages {
+        stage("scm") {
+            steps {
+                git 'https://github.com/Raghu-acer/game-of-life.git'
+            }
+        }
+        stage("build") {
+            steps {
+                sh script: 'mvn clean package'
+            }
+        }
+        stage("deploy to tomcat server") {
+            steps {
+                sshagent(['tomcat deploy']) {                            
+                   sh """
+                   
+                   scp -o StrictHostKeyChecking=no gameoflife-web/target/*.war ubuntu@172.31.12.38:/opt/tomcat/webapps/'
+		           ssh ubuntu@172.31.12.38 /opt/tomcat/bin/shutdown.sh
+                   ssh ubuntu@172.31.12.38 /opt/tomcat/bin/startup.sh
+
+                   """
+                }
+            }
+        }
+    }
+}

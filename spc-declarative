@@ -1,0 +1,35 @@
+pipeline {
+    agent any
+    stages {
+        stage("scm") {
+            steps {
+                git branch: 'main', url: 'https://github.com/Raghu-acer/spring-petclinic.git'
+            }
+        }
+        stage("build") {
+            steps {
+                sh script: 'mvn clean package'
+            }
+        }
+        stage("deploy to tomcat server") {
+            steps {
+                sshagent(['tomcat deploy']) {                            
+                   sh """
+                   
+                   scp -o StrictHostKeyChecking=no target/*.jar ubuntu@172.31.12.38:/opt/tomcat/webapps/
+		           ssh ubuntu@172.31.12.38 /opt/tomcat/bin/shutdown.sh
+                   ssh ubuntu@172.31.12.38 /opt/tomcat/bin/startup.sh
+
+                   """
+                }
+            }
+        }
+        stage("run") {
+            steps {
+                 dir('cd /opt/tomcat/webapps/') {
+               sh script: 'java -jar spring-petclinic-2.4.2.jar'
+              }
+            }
+        }
+    }
+}
